@@ -1,34 +1,128 @@
 # ai-dev
 
-Task-first AI coding plugin for Claude Code & Codex CLI.
+Task-first development plugin for **Claude Code**.
 
-One task = one worktree + one branch + one isolated sub-agent session.
+One task = one worktree + one branch + one isolated sub-agent. Stop polluting your main repo with parallel changes.
 
-## Install
+## What it does
 
-### Claude Code
-```bash
-git clone https://github.com/phpor/ai-dev.git ~/.claude/ai-dev
-ln -s ~/.claude/ai-dev/claude/commands/*.md ~/.claude/commands/
+Instead of running agents directly in your checked-out repo, each task gets:
+
+1. An isolated `git worktree` under `~/task_workspaces/`
+2. Its own auto-named branch (`task/YYYYMMDD-xxxxxx`)
+3. A `/subtask` sub-agent running inside that worktree
+
+Your base repos under `~/repos/` stay clean.
+
+## Install (Claude Code plugin)
+
+### Via marketplace (recommended)
+
+```
+/plugin marketplace add phpor/ai-dev
+/plugin install ai-dev@ai-dev
 ```
 
-### Codex CLI
+### Manual install
+
 ```bash
-git clone https://github.com/phpor/ai-dev.git ~/.codex/ai-dev
-cp ~/.codex/ai-dev/codex/commands/*.md ~/.codex/commands/
+git clone https://github.com/phpor/ai-dev.git ~/.claude/plugins/ai-dev
+```
+
+Then enable it:
+
+```
+/plugin enable ai-dev
+```
+
+## Setup (one-time)
+
+```bash
+# 1. Create config directory
+mkdir -p ~/.ai-dev
+
+# 2. Copy the repo registry template
+cp ~/.claude/plugins/ai-dev/shared/repo-registry.json.example ~/.ai-dev/repo-registry.json
+
+# 3. Edit ~/.ai-dev/repo-registry.json with your actual repos
+```
+
+```json
+{
+  "workspace_root": "~/task_workspaces",
+  "repos_root": "~/repos",
+  "repos": [
+    {
+      "name": "user-service",
+      "path": "~/repos/user-service",
+      "default_branch": "master",
+      "keywords": ["登录", "用户", "user", "login"]
+    },
+    {
+      "name": "auth-common",
+      "path": "~/repos/auth-common",
+      "default_branch": "master",
+      "keywords": ["鉴权", "jwt", "token", "auth"]
+    }
+  ]
+}
+```
+
+```bash
+# 4. Clone your base repos (only once, never edit directly here)
+mkdir -p ~/repos && cd ~/repos
+git clone git@github.com:your-org/user-service.git
+git clone git@github.com:your-org/auth-common.git
 ```
 
 ## Commands
+
 | Command | Description |
 |---|---|
-| /new-task <desc> | Create worktree + branch + spawn sub-agent |
-| /list-tasks | List all active tasks |
-| /resume-task <id> | Resume an existing task |
-| /clean-task <id> [--keep-branch] | Clean up worktrees and branches |
+| `/new-task <desc>` | Create worktree + branch + spawn sub-agent |
+| `/list-tasks` | List all active tasks and their status |
+| `/resume-task <id>` | Resume an existing task worktree |
+| `/clean-task <id> [--keep-branch]` | Remove worktrees and branches |
 
-## Setup
-1. Copy shared/repo-registry.json.example to ~/.ai-dev/repo-registry.json
-2. Edit with your repos
-3. Clone base repos to ~/repos/
+## Usage
 
-MIT License
+```
+/new-task Refactor login module, add password strength check
+```
+
+Claude will:
+1. Match repos from your registry
+2. Generate a task ID like `task-20261010-a1b2c3`
+3. Pull latest master for each repo
+4. Create `task/<task-id>` branches
+5. Create worktrees under `~/task_workspaces/`
+6. Write `TASK.md` in each worktree
+7. Spawn `/subtask --cwd <worktree>` for each repo
+
+## Directory layout
+
+```
+~/.claude/plugins/ai-dev/     # This plugin
+├── .claude-plugin/plugin.json   # Plugin manifest
+├── commands/                   # Slash commands
+│   ├── new-task.md
+│   ├── clean-task.md
+│   ├── list-tasks.md
+│   └── resume-task.md
+├── scripts/                    # Helper scripts
+└── shared/
+    └── repo-registry.json.example
+
+~/repos/                        # Base repos (read-only, never edit directly)
+~/task_workspaces/              # Task worktrees (one per task per repo)
+~/.ai-dev/
+  └── repo-registry.json        # Your personal repo registry
+```
+
+## Codex support
+
+Codex CLI doesn't use the same plugin system. See `codex/commands/` for equivalent prompts you can paste into your Codex sessions, or add them to your `AGENTS.md`.
+
+## License
+
+MIT
