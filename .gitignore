@@ -1,0 +1,7 @@
+.ai-dev/
+repo-registry.json
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
