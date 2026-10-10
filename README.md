@@ -79,15 +79,15 @@ git clone git@github.com:your-org/auth-common.git
 
 | Command | Description |
 |---|---|
-| `/new-task <desc>` | Create worktree + branch + spawn sub-agent |
-| `/list-tasks` | List all active tasks and their status |
-| `/resume-task <id>` | Resume an existing task worktree |
-| `/clean-task <id> [--keep-branch]` | Remove worktrees and branches |
+| `/task-new <desc>` | Create worktree + branch + spawn sub-agent |
+| `/task-list` | List all active tasks and their status |
+| `/task-resume <id>` | Resume an existing task worktree |
+| `/task-clean <id> [--keep-branch]` | Remove worktrees and branches |
 
 ## Usage
 
 ```
-/new-task Refactor login module, add password strength check
+/task-new Refactor login module, add password strength check
 ```
 
 Claude will:
@@ -105,10 +105,10 @@ Claude will:
 ~/.claude/plugins/ai-dev/     # This plugin
 ├── .claude-plugin/plugin.json   # Plugin manifest
 ├── commands/                   # Slash commands
-│   ├── new-task.md
-│   ├── clean-task.md
-│   ├── list-tasks.md
-│   └── resume-task.md
+│   ├── task-new.md
+│   ├── task-clean.md
+│   ├── task-list.md
+│   └── task-resume.md
 ├── scripts/                    # Helper scripts
 └── shared/
     └── repo-registry.json.example
