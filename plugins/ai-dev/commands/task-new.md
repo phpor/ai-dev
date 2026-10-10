@@ -142,7 +142,15 @@ Examples:
 For each repo worktree, use `/subtask`:
 
 ```
-/subtask --cwd <absolute-worktree-path> "Read ../TASK.md in the parent task directory. Complete the task. When done, write ../SUMMARY-<repo-name>.md in the parent task directory (NOT inside this worktree) with: files changed, test results, cross-repo deps. Do not modify files inside this worktree beyond your code changes, and do not touch other worktrees."
+/subtask --cwd <absolute-worktree-path> "Read ../TASK.md in the parent task directory. Complete the task. Do NOT modify files inside this worktree beyond your code changes, and do not touch other worktrees.
+
+REQUIRED WORKFLOW:
+1. Make the code changes.
+2. Run the project's test suite. Fix any failures.
+3. Self-review your own diff: run `git diff` and read every change critically — check for bugs, edge cases, missing error handling, style inconsistencies, leftover debug code, and anything you would flag in a PR review.
+4. Fix every issue you find. Re-run tests.
+5. Repeat steps 3–4 until a self-review pass finds zero new issues.
+6. Only then write ../SUMMARY-<repo-name>.md in the parent task directory (NOT inside this worktree) with: files changed, test results, cross-repo deps, and a note confirming the self-review loop ran clean."
 ```
 
 Note: `TASK.md` and all `SUMMARY-<repo-name>.md` live in the task root, outside any git worktree, so they never pollute git status.
@@ -160,4 +168,5 @@ Print task directory path, branch name, list of worktrees, list of spawned sub-a
 - **NEVER modify files in base repos under `~/repos/`.**
 - Sub-agents communicate via files only (TASK.md in, SUMMARY-<repo>.md out).
 - After spawning, wait for sub-agents to report via SUMMARY files.
+- **Every sub-agent MUST self-review its own diff iteratively** (`git diff` → fix issues → re-test → repeat) until a clean pass, before writing SUMMARY.md.
 - If `glab` is not installed or not authenticated (`glab auth status` fails), tell the user to install and login first.
