@@ -56,20 +56,43 @@ If the task mentions a repo that is NOT already in the registry (either no match
 
    Use `jq` to append safely, or write the full file back.
 
-### Step 3: Generate task identity
+### Step 3: Generate task identity and semantic branch name
 
-- `TASK_ID` = `task-YYYYMMDD-XXXXXX` (6 random chars)
-- `BRANCH_NAME` = `task/${TASK_ID}`
-- `WORKTREE_ROOT` = `~/task_workspaces`
+1. Analyze the task description and pick a conventional commit type:
+   - `feat` — new feature
+   - `fix` — bug fix
+   - `refactor` — code refactoring with no behavior change
+   - `docs` — documentation only
+   - `chore` — build, tooling, dependencies
+   - `perf` — performance improvement
+   - `test` — adding or fixing tests
+2. Summarize the task into 3–5 words in kebab-case (lowercase, hyphen-separated).
+3. Generate a short unique suffix: `YYYYMMDD-XXXXXX` (6 random chars).
+4. Ask the user to confirm or edit the branch name before proceeding.
+
+Format:
+
+```
+BRANCH_NAME = <type>/<short-summary>-YYYYMMDD-XXXXXX
+TASK_ID     = <short-summary>-YYYYMMDD-XXXXXX
+WORKTREE_ROOT = ~/task_workspaces
+```
+
+Examples:
+- `feat/login-pwd-strength-20261010-a1b2c3`
+- `fix/user-service-timeout-20261010-b2c3d4`
+- `refactor/auth-common-jwt-20261010-e3f4a5`
+
+Worktree directory uses the TASK_ID prefix: `~/task_workspaces/${TASK_ID}-${repo.name}`.
 
 ### Step 4: Set up each confirmed repo
 
 For each repo (from registry or newly discovered):
 1. `cd` to its base repo path
 2. `git checkout default_branch && git pull origin default_branch`
-3. `git checkout -b ${BRANCH_NAME}` (abort if already exists)
+3. `git checkout -b ${BRANCH_NAME}` (if already exists, append another short suffix or ask user)
 4. `git worktree add ~/task_workspaces/${TASK_ID}-${repo.name} ${BRANCH_NAME}`
-5. Write `TASK.md` in the worktree with: task ID, branch, repo name, full task description, and sub-agent instructions
+5. Write `TASK.md` in the worktree with: task ID, branch name, repo name, full task description, and sub-agent instructions
 
 ### Step 5: Spawn sub-agents
 
@@ -87,6 +110,7 @@ Print task ID, branch name, worktree paths, list of spawned sub-agents, and any 
 
 - NEVER search or scan the local filesystem for repos. Only use `glab search projects` for discovery.
 - ALWAYS confirm with the user before cloning a new repo or adding it to the registry.
+- ALWAYS confirm the generated branch name with the user before creating it.
 - NEVER modify files in base repos under `~/repos/`.
 - Sub-agents communicate via files only (TASK.md in, SUMMARY.md out).
 - After spawning, wait for sub-agents to report via SUMMARY.md.
