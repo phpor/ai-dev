@@ -16,15 +16,51 @@ Your base repos under `~/repos/` stay clean.
 
 ## Install
 
+### In a Claude Code session
+
 ```
 /plugin marketplace add phpor/ai-dev
 /plugin install ai-dev@ai-dev
 ```
 
-Then enable it:
+### From shell (CLI)
 
+```bash
+# Add the marketplace
+claude plugin marketplace add phpor/ai-dev
+
+# Install the plugin
+claude plugin install ai-dev@ai-dev
+
+# Verify it's installed
+claude plugin list
 ```
-/plugin enable ai-dev
+
+### Enable / disable
+
+```bash
+claude plugin enable ai-dev@ai-dev
+claude plugin disable ai-dev@ai-dev
+```
+
+### Update
+
+```bash
+# Pull latest marketplace metadata
+claude plugin marketplace update ai-dev
+
+# Update the plugin to the latest version
+claude plugin update ai-dev@ai-dev
+```
+
+### Uninstall
+
+```bash
+# Remove the plugin
+claude plugin uninstall ai-dev@ai-dev
+
+# Optionally remove the marketplace too
+claude plugin marketplace remove ai-dev
 ```
 
 ## Setup (one-time)
@@ -33,7 +69,7 @@ Then enable it:
 # 1. Create config directory
 mkdir -p ~/.ai-dev
 
-# 2. Copy the repo registry template
+# 2. Copy the repo registry template (path depends on install location)
 cp ~/.claude/plugins/marketplaces/phpor-ai-dev/plugins/ai-dev/shared/repo-registry.json.example ~/.ai-dev/repo-registry.json
 
 # 3. Edit ~/.ai-dev/repo-registry.json with your actual repos
