@@ -5,13 +5,15 @@ description: Resume an existing task by switching to its worktree and recovering
 
 # /task-resume
 
-Resume an existing task worktree and pick up where you left off.
+Resume an existing task (all its worktrees across repos) and pick up where you left off.
 
 ## Usage
 
 ```
 /task-resume <TASK_ID>
 ```
+
+`TASK_ID` is the short form shown by `/task-list`, e.g. `login-pwd-20261010-a1b2c3`.
 
 ## Instructions
 
@@ -21,10 +23,11 @@ Resume an existing task worktree and pick up where you left off.
    - Read `TASK.md` to recover the original task description
    - Read `SUMMARY.md` if it exists (what the sub-agent already completed)
    - Check git status for current uncommitted changes
-4. Use the `/cd` built-in to switch the main session to the primary worktree.
+4. Use the `/cd` built-in to switch the main session to the primary worktree (first repo found, or ask user which one).
 5. Present a summary:
    - Original task description
-   - What was already done (from SUMMARY.md)
+   - List of repos/worktrees involved
+   - What was already done (from each SUMMARY.md)
    - Current git status per worktree
    - Suggested next steps
 6. Ask user whether to continue in the main session or spawn a fresh `/subtask`.
@@ -33,3 +36,4 @@ Resume an existing task worktree and pick up where you left off.
 
 - Do NOT create new branches or worktrees. This resumes an existing task.
 - Always recover context from TASK.md and SUMMARY.md before making changes.
+- A task may span multiple repos — report status for all of them.
