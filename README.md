@@ -53,6 +53,25 @@ claude plugin marketplace update ai-dev
 claude plugin update ai-dev@ai-dev
 ```
 
+### Use SSH instead of HTTPS
+
+The shorthand `phpor/ai-dev` clones over HTTPS by default. To force SSH, pass the full SSH URL:
+
+```bash
+# Remove the HTTPS one first if already added
+claude plugin marketplace remove ai-dev
+
+# Add via SSH
+claude plugin marketplace add git@github.com:phpor/ai-dev.git
+
+# Then install normally
+claude plugin install ai-dev@ai-dev
+```
+
+Requirements:
+- Your SSH key is added to GitHub and works without a passphrase prompt (`ssh -T git@github.com` succeeds)
+- `github.com` is already in `~/.ssh/known_hosts` (first SSH login to GitHub adds it automatically)
+
 ### Uninstall
 
 ```bash
