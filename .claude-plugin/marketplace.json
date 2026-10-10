@@ -1,0 +1,17 @@
+{
+  "name": "ai-dev",
+  "description": "Task-first development plugin for Claude Code - worktree per task, isolated sub-agents",
+  "owner": {
+    "name": "phpor",
+    "url": "https://github.com/phpor"
+  },
+  "plugins": [
+    {
+      "name": "ai-dev",
+      "source": "./plugins/ai-dev",
+      "description": "One task = one worktree + one branch + one isolated sub-agent. Stop polluting your main repo.",
+      "version": "1.0.0",
+      "keywords": ["worktree", "task", "subagent", "git", "parallel"]
+    }
+  ]
+}
