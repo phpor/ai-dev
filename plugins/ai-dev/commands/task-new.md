@@ -21,12 +21,16 @@ Each task gets its own directory. All repos for that task are checked out as sub
 ~/task_workspaces/
 ├── task-login-pwd-20261010-a1b2c3/     # one task directory
 │   ├── TASK.md                          # task description, shared by all sub-agents
+│   ├── SUMMARY-user-service.md          # sub-agent writes results here (not in git)
+│   ├── SUMMARY-auth-common.md
 │   ├── user-service/                    # git worktree for this repo
 │   └── auth-common/                     # git worktree for this repo
 └── fix-timeout-20261010-b2c3d4/
     ├── TASK.md
     └── api-gateway/
 ```
+
+TASK.md and SUMMARY-<repo>.md live outside any worktree, so they never appear in git status.
 
 All repos for one task share the same branch name.
 
@@ -138,8 +142,10 @@ Examples:
 For each repo worktree, use `/subtask`:
 
 ```
-/subtask --cwd <absolute-worktree-path> "Read ../TASK.md in the parent directory. Complete the task. Write SUMMARY.md in this worktree when done with changes, tests, and cross-repo deps. Do not modify files outside this worktree."
+/subtask --cwd <absolute-worktree-path> "Read ../TASK.md in the parent task directory. Complete the task. When done, write ../SUMMARY-<repo-name>.md in the parent task directory (NOT inside this worktree) with: files changed, test results, cross-repo deps. Do not modify files inside this worktree beyond your code changes, and do not touch other worktrees."
 ```
+
+Note: `TASK.md` and all `SUMMARY-<repo-name>.md` live in the task root, outside any git worktree, so they never pollute git status.
 
 ### Step 7: Report
 
@@ -152,6 +158,6 @@ Print task directory path, branch name, list of worktrees, list of spawned sub-a
 - **ALWAYS confirm the generated branch name with the user before creating it.**
 - **ALWAYS confirm task understanding with the user AFTER exploring code but BEFORE spawning sub-agents.** Do not skip this step.
 - **NEVER modify files in base repos under `~/repos/`.**
-- Sub-agents communicate via files only (TASK.md in, SUMMARY.md out).
-- After spawning, wait for sub-agents to report via SUMMARY.md.
+- Sub-agents communicate via files only (TASK.md in, SUMMARY-<repo>.md out).
+- After spawning, wait for sub-agents to report via SUMMARY files.
 - If `glab` is not installed or not authenticated (`glab auth status` fails), tell the user to install and login first.

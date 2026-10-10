@@ -7,7 +7,7 @@ description: List all active tasks, their worktrees, and status
 
 Show all active tasks and their worktree status.
 
-Each task is a directory under `~/task_workspaces/` named `task-<summary>-<date>-<random6>`. Inside it, each subdirectory (except `TASK.md`) is a git worktree for one repo.
+Each task is a directory under `~/task_workspaces/` named `task-<summary>-<date>-<random6>`. Inside it, each subdirectory (except `TASK.md` and `SUMMARY-*.md`) is a git worktree for one repo.
 
 ## Instructions
 
@@ -18,8 +18,8 @@ Each task is a directory under `~/task_workspaces/` named `task-<summary>-<date>
    - List subdirectories (each is a repo worktree)
    - For each worktree:
      - Check git status (clean / modified / untracked)
-     - Check if `SUMMARY.md` exists (sub-agent finished vs still running)
-   - Overall status: `running` if any worktree lacks SUMMARY.md, `done` otherwise
+     - Check if `SUMMARY-<repo-name>.md` exists at the task root (sub-agent finished vs still running)
+   - Overall status: `running` if any repo lacks its SUMMARY file, `done` otherwise
    - Get last modified time
 4. Print as a table grouped by task, sorted by most recent.
 

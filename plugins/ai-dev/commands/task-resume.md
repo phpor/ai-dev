@@ -23,13 +23,13 @@ Resume an existing task (all its worktrees across repos) and pick up where you l
 2. If not found: tell user "Task not found. Use /task-list to see active tasks." and abort.
 3. Read `TASK.md` in the task directory to recover the original task description and branch name.
 4. For each subdirectory (repo worktree):
-   - Read `SUMMARY.md` if it exists (what the sub-agent already completed)
+   - Read `SUMMARY-<repo-name>.md` at the task root if it exists (what the sub-agent already completed)
    - Check git status for current uncommitted changes
 5. Use the `/cd` built-in to switch the main session to the primary worktree (first repo found, or ask user which one).
 6. Present a summary:
    - Original task description (from TASK.md)
    - List of repos/worktrees involved
-   - What was already done (from each SUMMARY.md)
+   - What was already done (from each SUMMARY-<repo>.md)
    - Current git status per worktree
    - Suggested next steps
 7. Ask user whether to continue in the main session or spawn a fresh `/subtask`.
@@ -37,5 +37,5 @@ Resume an existing task (all its worktrees across repos) and pick up where you l
 ## Rules
 
 - Do NOT create new branches or worktrees. This resumes an existing task.
-- Always recover context from TASK.md (at task root) and per-worktree SUMMARY.md before making changes.
+- Always recover context from `TASK.md` and `SUMMARY-<repo>.md` (both at task root) before making changes.
 - A task may span multiple repos — report status for all of them.

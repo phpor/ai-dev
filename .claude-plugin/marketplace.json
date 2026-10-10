@@ -10,7 +10,7 @@
       "name": "ai-dev",
       "source": "./plugins/ai-dev",
       "description": "One task = one worktree + one branch + one isolated sub-agent. Stop polluting your main repo.",
-      "version": "1.3.0",
+      "version": "1.3.1",
       "keywords": ["worktree", "task", "subagent", "git", "parallel"]
     }
   ]
