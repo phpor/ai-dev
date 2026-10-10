@@ -14,19 +14,11 @@ Instead of running agents directly in your checked-out repo, each task gets:
 
 Your base repos under `~/repos/` stay clean.
 
-## Install (Claude Code plugin)
-
-### Via marketplace (recommended)
+## Install
 
 ```
 /plugin marketplace add phpor/ai-dev
 /plugin install ai-dev@ai-dev
-```
-
-### Manual install
-
-```bash
-git clone https://github.com/phpor/ai-dev.git ~/.claude/plugins/ai-dev
 ```
 
 Then enable it:
@@ -42,7 +34,7 @@ Then enable it:
 mkdir -p ~/.ai-dev
 
 # 2. Copy the repo registry template
-cp ~/.claude/plugins/ai-dev/shared/repo-registry.json.example ~/.ai-dev/repo-registry.json
+cp ~/.claude/plugins/marketplaces/phpor-ai-dev/plugins/ai-dev/shared/repo-registry.json.example ~/.ai-dev/repo-registry.json
 
 # 3. Edit ~/.ai-dev/repo-registry.json with your actual repos
 ```
@@ -99,29 +91,29 @@ Claude will:
 6. Write `TASK.md` in each worktree
 7. Spawn `/subtask --cwd <worktree>` for each repo
 
-## Directory layout
+## Repo structure
 
 ```
-~/.claude/plugins/ai-dev/     # This plugin
-├── .claude-plugin/plugin.json   # Plugin manifest
-├── commands/                   # Slash commands
-│   ├── task-new.md
-│   ├── task-clean.md
-│   ├── task-list.md
-│   └── task-resume.md
-├── scripts/                    # Helper scripts
-└── shared/
-    └── repo-registry.json.example
-
-~/repos/                        # Base repos (read-only, never edit directly)
-~/task_workspaces/              # Task worktrees (one per task per repo)
-~/.ai-dev/
-  └── repo-registry.json        # Your personal repo registry
+ai-dev/
+├── .claude-plugin/
+│   └── marketplace.json          # Marketplace index
+├── plugins/
+│   └── ai-dev/                    # The actual plugin
+│       ├── .claude-plugin/
+│       │   └── plugin.json         # Plugin manifest
+│       ├── commands/               # Slash commands
+│       │   ├── task-new.md
+│       │   ├── task-clean.md
+│       │   ├── task-list.md
+│       │   └── task-resume.md
+│       ├── scripts/
+│       └── shared/
+└── README.md
 ```
 
 ## Codex support
 
-Codex CLI doesn't use the same plugin system. See `codex/commands/` for equivalent prompts you can paste into your Codex sessions, or add them to your `AGENTS.md`.
+Codex CLI doesn't use the same plugin system. See `plugins/ai-dev/codex/commands/` for equivalent prompts you can paste into your Codex sessions, or add them to your `AGENTS.md`.
 
 ## License
 
