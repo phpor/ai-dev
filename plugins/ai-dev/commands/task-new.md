@@ -38,11 +38,14 @@ You are the main orchestrator. Set up an isolated task environment and delegate 
 
 1. Read `~/.ai-dev/repo-registry.json`. If missing, tell user to copy from `${CLAUDE_PLUGIN_ROOT}/shared/repo-registry.json.example` first.
 2. Match the task description against the `keywords` of each repo in the registry.
-3. Present matched repos for confirmation.
+3. **Clarify with the user**:
+   - If you are NOT confident which repos are involved (keyword matches are weak, multiple repos could apply, or the task is ambiguous), ask the user to confirm: "I think this task involves X and Y repos. Is that correct?"
+   - If no repos match at all, explicitly ask the user which repos to use.
+   - Do NOT proceed until the user confirms the repo list.
 
 ### Step 2: Discover unknown repos via glab
 
-If the task mentions a repo that is NOT already in the registry (either no match at all, or the user explicitly names a project), discover it with `glab` — do NOT scan the local filesystem.
+If the user names a repo that is NOT already in the registry, discover it with `glab` — do NOT scan the local filesystem.
 
 1. Ask the user for the project name or keyword if it's ambiguous.
 2. Run a GitLab search:
@@ -114,7 +117,23 @@ Examples:
    - `git checkout -b ${BRANCH_NAME}` (if already exists, append another short suffix or ask user)
    - `git worktree add ~/task_workspaces/task-<...>/<repo.name> ${BRANCH_NAME}`
 
-### Step 5: Spawn sub-agents
+### Step 5: Analyze code and confirm task understanding
+
+**Before spawning any sub-agents, explore the codebases and confirm your understanding with the user.**
+
+1. For each worktree, quickly explore the codebase:
+   - Read top-level files (README, package.json, go.mod, etc.) to understand the project
+   - Find the relevant modules/files mentioned in the task
+   - Note architecture, conventions, and any cross-repo dependencies
+2. Formulate your understanding of the task:
+   - What exactly needs to change in each repo
+   - Which files/modules are involved
+   - How the repos depend on each other
+   - Potential risks or questions
+3. Present this understanding to the user in a clear summary and **ask**: "Does this match what you want? Any corrections before I start sub-agents?"
+4. Only proceed to Step 6 after the user confirms. If the user corrects you, update TASK.md accordingly.
+
+### Step 6: Spawn sub-agents
 
 For each repo worktree, use `/subtask`:
 
@@ -122,7 +141,7 @@ For each repo worktree, use `/subtask`:
 /subtask --cwd <absolute-worktree-path> "Read ../TASK.md in the parent directory. Complete the task. Write SUMMARY.md in this worktree when done with changes, tests, and cross-repo deps. Do not modify files outside this worktree."
 ```
 
-### Step 6: Report
+### Step 7: Report
 
 Print task directory path, branch name, list of worktrees, list of spawned sub-agents, and any newly discovered repos added to the registry.
 
@@ -131,6 +150,7 @@ Print task directory path, branch name, list of worktrees, list of spawned sub-a
 - **NEVER search, scan, or guess repos on the local filesystem.** No `find`, no `ls` over `~/code`, no Glob, no reading `.git/config` of random directories. Discovery is registry-first, glab-second, ask-user-third.
 - **ALWAYS confirm with the user before cloning a new repo or adding it to the registry.**
 - **ALWAYS confirm the generated branch name with the user before creating it.**
+- **ALWAYS confirm task understanding with the user AFTER exploring code but BEFORE spawning sub-agents.** Do not skip this step.
 - **NEVER modify files in base repos under `~/repos/`.**
 - Sub-agents communicate via files only (TASK.md in, SUMMARY.md out).
 - After spawning, wait for sub-agents to report via SUMMARY.md.

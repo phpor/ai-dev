@@ -1,7 +1,7 @@
 {
   "name": "ai-dev",
   "displayName": "AI Dev - Task First",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "Task-first development: one task = one worktree + one branch + one isolated sub-agent. Stop polluting your main repo with parallel changes.",
   "author": {
     "name": "phpor",
