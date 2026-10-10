@@ -13,6 +13,23 @@ Create an isolated worktree + branch for a new task and spawn a sub-agent to do 
 - **ONLY source repos from two places**: (1) the `~/.ai-dev/repo-registry.json` you just read, or (2) `glab search projects` on GitLab. Nothing else.
 - If glab returns nothing useful, ask the user to provide the exact GitLab path (e.g. `group/project`). Do not improvise by looking around the disk.
 
+## Directory layout
+
+Each task gets its own directory. All repos for that task are checked out as subdirectories:
+
+```
+~/task_workspaces/
+├── task-login-pwd-20261010-a1b2c3/     # one task directory
+│   ├── TASK.md                          # task description, shared by all sub-agents
+│   ├── user-service/                    # git worktree for this repo
+│   └── auth-common/                     # git worktree for this repo
+└── fix-timeout-20261010-b2c3d4/
+    ├── TASK.md
+    └── api-gateway/
+```
+
+All repos for one task share the same branch name.
+
 ## Instructions
 
 You are the main orchestrator. Set up an isolated task environment and delegate to sub-agents.
@@ -79,38 +96,35 @@ If the task mentions a repo that is NOT already in the registry (either no match
 Format:
 
 ```
-BRANCH_NAME = <type>/<short-summary>-YYYYMMDD-XXXXXX
-TASK_ID     = <short-summary>-YYYYMMDD-XXXXXX
-WORKTREE_ROOT = ~/task_workspaces
+TASK_DIR     = ~/task_workspaces/task-<summary>-<date>-<random6>
+BRANCH_NAME  = <type>/<summary>-<date>-<random6>
 ```
 
 Examples:
-- `feat/login-pwd-strength-20261010-a1b2c3`
-- `fix/user-service-timeout-20261010-b2c3d4`
-- `refactor/auth-common-jwt-20261010-e3f4a5`
-
-Worktree directory uses the TASK_ID prefix: `~/task_workspaces/${TASK_ID}-${repo.name}`.
+- `~/task_workspaces/task-login-pwd-20261010-a1b2c3/`
+- branch: `feat/login-pwd-20261010-a1b2c3`
 
 ### Step 4: Set up each confirmed repo
 
-For each repo (from registry or newly discovered):
-1. `cd` to its base repo path
-2. `git checkout default_branch && git pull origin default_branch`
-3. `git checkout -b ${BRANCH_NAME}` (if already exists, append another short suffix or ask user)
-4. `git worktree add ~/task_workspaces/${TASK_ID}-${repo.name} ${BRANCH_NAME}`
-5. Write `TASK.md` in the worktree with: task ID, branch name, repo name, full task description, and sub-agent instructions
+1. Create the task directory: `mkdir -p ~/task_workspaces/task-<summary>-<date>-<random6>`
+2. Write `TASK.md` in the task directory with: branch name, repos involved, full task description, and sub-agent instructions.
+3. For each repo:
+   - `cd` to its base repo path
+   - `git checkout default_branch && git pull origin default_branch`
+   - `git checkout -b ${BRANCH_NAME}` (if already exists, append another short suffix or ask user)
+   - `git worktree add ~/task_workspaces/task-<...>/<repo.name> ${BRANCH_NAME}`
 
 ### Step 5: Spawn sub-agents
 
-For each worktree, use `/subtask`:
+For each repo worktree, use `/subtask`:
 
 ```
-/subtask --cwd <absolute-worktree-path> "Read TASK.md. Complete the task. Write SUMMARY.md when done with changes, tests, and cross-repo deps. Do not modify files outside this worktree."
+/subtask --cwd <absolute-worktree-path> "Read ../TASK.md in the parent directory. Complete the task. Write SUMMARY.md in this worktree when done with changes, tests, and cross-repo deps. Do not modify files outside this worktree."
 ```
 
 ### Step 6: Report
 
-Print task ID, branch name, worktree paths, list of spawned sub-agents, and any newly discovered repos that were added to the registry.
+Print task directory path, branch name, list of worktrees, list of spawned sub-agents, and any newly discovered repos added to the registry.
 
 ### Rules
 
