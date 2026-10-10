@@ -7,6 +7,12 @@ description: Create a new task-isolated worktree, branch, and spawn a sub-agent 
 
 Create an isolated worktree + branch for a new task and spawn a sub-agent to do the work.
 
+## HARD CONSTRAINTS (read first)
+
+- **NEVER search, scan, walk, or guess local directories** (e.g. `find ~`, `ls`, Glob over `~/code`, `~/projects`, etc.) to find a repo. The local filesystem is off-limits for discovery.
+- **ONLY source repos from two places**: (1) the `~/.ai-dev/repo-registry.json` you just read, or (2) `glab search projects` on GitLab. Nothing else.
+- If glab returns nothing useful, ask the user to provide the exact GitLab path (e.g. `group/project`). Do not improvise by looking around the disk.
+
 ## Instructions
 
 You are the main orchestrator. Set up an isolated task environment and delegate to sub-agents.
@@ -108,10 +114,10 @@ Print task ID, branch name, worktree paths, list of spawned sub-agents, and any 
 
 ### Rules
 
-- NEVER search or scan the local filesystem for repos. Only use `glab search projects` for discovery.
-- ALWAYS confirm with the user before cloning a new repo or adding it to the registry.
-- ALWAYS confirm the generated branch name with the user before creating it.
-- NEVER modify files in base repos under `~/repos/`.
+- **NEVER search, scan, or guess repos on the local filesystem.** No `find`, no `ls` over `~/code`, no Glob, no reading `.git/config` of random directories. Discovery is registry-first, glab-second, ask-user-third.
+- **ALWAYS confirm with the user before cloning a new repo or adding it to the registry.**
+- **ALWAYS confirm the generated branch name with the user before creating it.**
+- **NEVER modify files in base repos under `~/repos/`.**
 - Sub-agents communicate via files only (TASK.md in, SUMMARY.md out).
 - After spawning, wait for sub-agents to report via SUMMARY.md.
 - If `glab` is not installed or not authenticated (`glab auth status` fails), tell the user to install and login first.
