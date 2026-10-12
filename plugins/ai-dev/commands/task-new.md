@@ -69,18 +69,26 @@ If the user names a repo that is NOT already in the registry, discover it with `
    git -C "$REPOS_ROOT/<project-name>" symbolic-ref refs/remotes/origin/HEAD | sed 's|refs/remotes/origin/||'
    ```
 
-6. Append the new repo to `~/.ai-dev/repo-registry.json`:
+6. **Automatically update the registry** — do NOT wait for the user to explicitly ask. After cloning, present the proposed entry and confirm with the user before writing:
 
-   ```json
+   ```
+   I'll add this to ~/.ai-dev/repo-registry.json:
    {
      "name": "<project-name>",
      "path": "~/repos/<project-name>",
      "default_branch": "<master|main>",
-     "keywords": ["<user-provided keywords>"]
+     "keywords": ["<auto-inferred keywords from project description and user's task>"]
    }
+   Is this correct? (y/n/edit)
    ```
 
-   Use `jq` to append safely, or write the full file back.
+   - Auto-infer keywords from the GitLab project description, topics, and the user's task context.
+   - If the user says yes, write it with `jq`:
+     ```bash
+     jq '.repos += [{name: "<name>", path: "~/repos/<name>", default_branch: "<branch>", keywords: [...]}]' ~/.ai-dev/repo-registry.json > /tmp/registry.json && mv /tmp/registry.json ~/.ai-dev/repo-registry.json
+     ```
+   - If the user wants to edit keywords or name, apply their changes then write.
+   - This way next time the repo matches automatically without glab search.
 
 ### Step 3: Generate task identity, name, and branch
 
@@ -175,7 +183,7 @@ Print task name, task directory path, branch name, list of worktrees, list of sp
 ### Rules
 
 - **NEVER search, scan, or guess repos on the local filesystem.** No `find`, no `ls` over `~/code`, no Glob, no reading `.git/config` of random directories. Discovery is registry-first, glab-second, ask-user-third.
-- **ALWAYS confirm with the user before cloning a new repo or adding it to the registry.**
+- **When a new repo is discovered via glab, automatically propose adding it to the registry** — don't wait for the user to ask. Confirm the entry before writing.
 - **ALWAYS confirm the task name and branch name with the user before creating it.**
 - **ALWAYS confirm task understanding with the user AFTER exploring code but BEFORE spawning sub-agents.** Do not skip this step.
 - **NEVER modify files in base repos under `~/repos/`.**

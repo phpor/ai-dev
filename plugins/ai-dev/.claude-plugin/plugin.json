@@ -1,7 +1,7 @@
 {
   "name": "ai-dev",
   "displayName": "AI Dev - Task First",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Task-first development: one task = one worktree + one branch + one isolated sub-agent. Archive and restore supported.",
   "author": {
     "name": "phpor",
