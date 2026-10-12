@@ -10,7 +10,7 @@
       "name": "ai-dev",
       "source": "./plugins/ai-dev",
       "description": "One task = one worktree + one branch + one isolated sub-agent. Archive and restore supported.",
-      "version": "2.0.1",
+      "version": "2.0.2",
       "keywords": ["worktree", "task", "subagent", "git", "parallel", "archive"]
     }
   ]

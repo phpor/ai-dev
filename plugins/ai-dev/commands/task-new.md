@@ -11,6 +11,7 @@ Create an isolated worktree + branch for a new task and spawn a sub-agent to do 
 
 - **NEVER search, scan, walk, or guess local directories** (e.g. `find ~`, `ls`, Glob over `~/code`, `~/projects`, etc.) to find a repo. The local filesystem is off-limits for discovery.
 - **ONLY source repos from two places**: (1) the `~/.ai-dev/repo-registry.json` you just read, or (2) `glab search projects` on GitLab. Nothing else.
+- **`~/repos/` (the `repos_root` in registry) is the ONLY canonical local source directory.** Never use or reference a repo that already exists elsewhere on disk (e.g. `~/code/`, `~/work/`, `~/projects/`). If a new project is discovered, always clone it fresh into `$REPOS_ROOT/<project-name>`, even if it already exists somewhere else locally. The registry `path` field must always point under `$REPOS_ROOT`.
 - If glab returns nothing useful, ask the user to provide the exact GitLab path (e.g. `group/project`). Do not improvise by looking around the disk.
 
 ## Directory layout
@@ -55,13 +56,20 @@ If the user names a repo that is NOT already in the registry, discover it with `
    ```
 
 3. Present the results (name, path, description, default branch) and ask the user to pick one.
-4. Once confirmed, clone it to the conventional directory:
+4. Once confirmed, clone it to the canonical directory under `$REPOS_ROOT` — **do NOT reuse an existing local clone elsewhere**, even if one exists:
 
    ```bash
    REPOS_ROOT=$(jq -r '.repos_root' ~/.ai-dev/repo-registry.json | sed "s|~|$HOME|")
    mkdir -p "$REPOS_ROOT"
-   glab repo clone <group/project> "$REPOS_ROOT/<project-name>"
+   # If already cloned to $REPOS_ROOT, pull latest; otherwise clone fresh.
+   if [ -d "$REPOS_ROOT/<project-name>/.git" ]; then
+     git -C "$REPOS_ROOT/<project-name>" pull
+   else
+     glab repo clone <group/project> "$REPOS_ROOT/<project-name>"
+   fi
    ```
+
+   The registry entry `path` will always be `$REPOS_ROOT/<project-name>`, never some other location on disk.
 
 5. Determine the default branch (try `master`, then `main`):
 
@@ -183,6 +191,7 @@ Print task name, task directory path, branch name, list of worktrees, list of sp
 ### Rules
 
 - **NEVER search, scan, or guess repos on the local filesystem.** No `find`, no `ls` over `~/code`, no Glob, no reading `.git/config` of random directories. Discovery is registry-first, glab-second, ask-user-third.
+- **`~/repos/` (repos_root) is the only canonical local source.** Never reuse clones from other directories. Always clone to `$REPOS_ROOT/<project-name>`.
 - **When a new repo is discovered via glab, automatically propose adding it to the registry** — don't wait for the user to ask. Confirm the entry before writing.
 - **ALWAYS confirm the task name and branch name with the user before creating it.**
 - **ALWAYS confirm task understanding with the user AFTER exploring code but BEFORE spawning sub-agents.** Do not skip this step.
