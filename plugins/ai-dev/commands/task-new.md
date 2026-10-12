@@ -19,20 +19,16 @@ Each task gets its own directory. All repos for that task are checked out as sub
 
 ```
 ~/task_workspaces/
-├── task-login-pwd-20261010-a1b2c3/     # one task directory
-│   ├── TASK.md                          # task description, shared by all sub-agents
-│   ├── SUMMARY-user-service.md          # sub-agent writes results here (not in git)
+├── task-login-pwd-20261010-a1b2c3/
+│   ├── TASK.md                          # task description
+│   ├── archive.json                     # task metadata (for archive/restore)
+│   ├── SUMMARY-user-service.md
 │   ├── SUMMARY-auth-common.md
-│   ├── user-service/                    # git worktree for this repo
-│   └── auth-common/                     # git worktree for this repo
-└── fix-timeout-20261010-b2c3d4/
-    ├── TASK.md
-    └── api-gateway/
+│   ├── user-service/                    # git worktree
+│   └── auth-common/                     # git worktree
 ```
 
-TASK.md and SUMMARY-<repo>.md live outside any worktree, so they never appear in git status.
-
-All repos for one task share the same branch name.
+TASK.md, archive.json, and SUMMARY-<repo>.md live outside any worktree.
 
 ## Instructions
 
@@ -86,9 +82,10 @@ If the user names a repo that is NOT already in the registry, discover it with `
 
    Use `jq` to append safely, or write the full file back.
 
-### Step 3: Generate task identity and semantic branch name
+### Step 3: Generate task identity, name, and branch
 
-1. Analyze the task description and pick a conventional commit type:
+1. **Meaningful task name**: Write a concise human-readable title for the task (e.g. "Add password strength validation to login"). This is stored in archive.json and shown in /task-list.
+2. Pick a conventional commit type:
    - `feat` — new feature
    - `fix` — bug fix
    - `refactor` — code refactoring with no behavior change
@@ -96,26 +93,44 @@ If the user names a repo that is NOT already in the registry, discover it with `
    - `chore` — build, tooling, dependencies
    - `perf` — performance improvement
    - `test` — adding or fixing tests
-2. Summarize the task into 3–5 words in kebab-case (lowercase, hyphen-separated).
-3. Generate a short unique suffix: `YYYYMMDD-XXXXXX` (6 random chars).
-4. Ask the user to confirm or edit the branch name before proceeding.
+3. Summarize the task into 3–5 words in kebab-case for the directory slug.
+4. Generate a short unique suffix: `YYYYMMDD-XXXXXX` (6 random chars).
+5. Ask the user to confirm or edit the task name and branch name before proceeding.
 
 Format:
 
 ```
-TASK_DIR     = ~/task_workspaces/task-<summary>-<date>-<random6>
-BRANCH_NAME  = <type>/<summary>-<date>-<random6>
+TASK_NAME    = "Add password strength validation to login"
+TASK_DIR     = ~/task_workspaces/task-login-pwd-20261010-a1b2c3
+BRANCH_NAME  = feat/login-pwd-20261010-a1b2c3
 ```
-
-Examples:
-- `~/task_workspaces/task-login-pwd-20261010-a1b2c3/`
-- branch: `feat/login-pwd-20261010-a1b2c3`
 
 ### Step 4: Set up each confirmed repo
 
 1. Create the task directory: `mkdir -p ~/task_workspaces/task-<summary>-<date>-<random6>`
-2. Write `TASK.md` in the task directory with: branch name, repos involved, full task description, and sub-agent instructions.
-3. For each repo:
+2. Write `TASK.md` in the task directory with: task name, branch name, repos involved, full task description, and sub-agent instructions.
+3. Write `archive.json` in the task directory:
+
+   ```json
+   {
+     "task_name": "<meaningful name>",
+     "task_id": "task-<summary>-<date>-<random6>",
+     "branch": "<type>/<summary>-<date>-<random6>",
+     "created_at": "<ISO timestamp>",
+     "description": "<original task description>",
+     "repos": {
+       "<repo-name>": {
+         "base_path": "~/repos/<repo-name>",
+         "default_branch": "<master|main>",
+         "last_commit": null,
+         "pushed_to_remote": false,
+         "remote_branch": null
+       }
+     }
+   }
+   ```
+
+4. For each repo:
    - `cd` to its base repo path
    - `git checkout default_branch && git pull origin default_branch`
    - `git checkout -b ${BRANCH_NAME}` (if already exists, append another short suffix or ask user)
@@ -153,17 +168,15 @@ REQUIRED WORKFLOW:
 6. Only then write ../SUMMARY-<repo-name>.md in the parent task directory (NOT inside this worktree) with: files changed, test results, cross-repo deps, and a note confirming the self-review loop ran clean."
 ```
 
-Note: `TASK.md` and all `SUMMARY-<repo-name>.md` live in the task root, outside any git worktree, so they never pollute git status.
-
 ### Step 7: Report
 
-Print task directory path, branch name, list of worktrees, list of spawned sub-agents, and any newly discovered repos added to the registry.
+Print task name, task directory path, branch name, list of worktrees, list of spawned sub-agents, and any newly discovered repos added to the registry.
 
 ### Rules
 
 - **NEVER search, scan, or guess repos on the local filesystem.** No `find`, no `ls` over `~/code`, no Glob, no reading `.git/config` of random directories. Discovery is registry-first, glab-second, ask-user-third.
 - **ALWAYS confirm with the user before cloning a new repo or adding it to the registry.**
-- **ALWAYS confirm the generated branch name with the user before creating it.**
+- **ALWAYS confirm the task name and branch name with the user before creating it.**
 - **ALWAYS confirm task understanding with the user AFTER exploring code but BEFORE spawning sub-agents.** Do not skip this step.
 - **NEVER modify files in base repos under `~/repos/`.**
 - Sub-agents communicate via files only (TASK.md in, SUMMARY-<repo>.md out).

@@ -1,36 +1,48 @@
 ---
 name: task-list
-description: List all active tasks, their worktrees, and status
+description: List active and archived tasks, their worktrees, and status
 ---
 
 # /task-list
 
-Show all active tasks and their worktree status.
-
-Each task is a directory under `~/task_workspaces/` named `task-<summary>-<date>-<random6>`. Inside it, each subdirectory (except `TASK.md` and `SUMMARY-*.md`) is a git worktree for one repo.
+Show all active tasks under `~/task_workspaces/`. Use `/task-list --archived` to see archived tasks under `~/task_archive/`.
 
 ## Instructions
 
-1. List all directories directly under `~/task_workspaces/` starting with `task-`.
-2. If none, say "No active tasks found."
-3. For each task directory:
-   - Read `TASK.md` at the root of the task directory (get branch name, description)
-   - List subdirectories (each is a repo worktree)
-   - For each worktree:
-     - Check git status (clean / modified / untracked)
-     - Check if `SUMMARY-<repo-name>.md` exists at the task root (sub-agent finished vs still running)
-   - Overall status: `running` if any repo lacks its SUMMARY file, `done` otherwise
-   - Get last modified time
-4. Print as a table grouped by task, sorted by most recent.
+1. By default, list active tasks under `~/task_workspaces/`:
+   - List directories starting with `task-`.
+   - If none, say "No active tasks found."
+   - For each task directory:
+     - Read `archive.json` for the meaningful task name and branch.
+     - If archive.json is missing, fall back to TASK.md.
+     - List subdirectories (each is a repo worktree).
+     - For each worktree: check git status (clean / modified / untracked).
+     - Check if `SUMMARY-<repo-name>.md` exists (sub-agent done vs running).
+     - Overall status: `running` if any repo lacks its SUMMARY, `done` otherwise.
+     - Get last modified time.
 
-## Output format
+2. If `--archived` flag is passed:
+   - List directories under `~/task_archive/` starting with `task-`.
+   - For each, read `archive.json` for task name, description, archived_at, and per-repo commit SHAs.
+   - No worktrees exist for archived tasks — show commit info instead.
+
+3. Print as a table grouped by task, sorted by most recent.
+
+## Output format — active tasks
 
 ```
-TASK DIRECTORY                                  BRANCH                              REPOS           STATUS
+TASK NAME                                    DIRECTORY                          REPOS           STATUS
+----------------------------------------------------------------------------------------------------------
+Add password strength validation             task-login-pwd-20261010-a1b2c3     user-service    done
+                                                                                 auth-common     running
+Fix gateway timeout on retries                task-fix-timeout-20261010-b2c3d4   api-gateway     done
+```
+
+## Output format — archived tasks (--archived)
+
+```
+TASK NAME                                    DIRECTORY                          ARCHIVED           COMMITS
 --------------------------------------------------------------------------------------------------------------
-task-login-pwd-20261010-a1b2c3                  feat/login-pwd-20261010-a1b2c3       user-service    done
-                                                                                     auth-common     running
-task-fix-timeout-20261010-b2c3d4                fix/timeout-20261010-b2c3d4          api-gateway     done
+Add password strength validation             task-login-pwd-20261010-a1b2c3     2026-10-11         user-service: a1b2c3d
+                                                                                                                 auth-common: e3f4g5h
 ```
-
-Each block = one task. Indented repo rows under it = the worktrees of that task.
