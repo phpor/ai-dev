@@ -1,6 +1,6 @@
 ---
 name: task-list
-description: List active and archived tasks, their worktrees, and status
+description: List active and archived tasks, their worktrees, process status, and status
 ---
 
 # /task-list
@@ -19,6 +19,7 @@ Show all active tasks under `~/task_workspaces/`. Use `/task-list --archived` to
      - For each worktree: check git status (clean / modified / untracked).
      - Check if `SUMMARY-<repo-name>.md` exists (sub-agent done vs running).
      - Overall status: `running` if any repo lacks its SUMMARY, `done` otherwise.
+     - **Check process status**: read `processes.json` if it exists. For each recorded PID, check if it's alive with `kill -0 <pid>`. Show running processes with their port.
      - Get last modified time.
 
 2. If `--archived` flag is passed:
@@ -31,12 +32,14 @@ Show all active tasks under `~/task_workspaces/`. Use `/task-list --archived` to
 ## Output format — active tasks
 
 ```
-TASK NAME                                    DIRECTORY                          REPOS           STATUS
-----------------------------------------------------------------------------------------------------------
-Add password strength validation             task-login-pwd-20261010-a1b2c3     user-service    done
-                                                                                 auth-common     running
-Fix gateway timeout on retries                task-fix-timeout-20261010-b2c3d4   api-gateway     done
+TASK NAME                                    DIRECTORY                          REPOS           STATUS    PROCESSES
+---------------------------------------------------------------------------------------------------------------------------
+Add password strength validation             task-login-pwd-20261010-a1b2c3     user-service    done      running :8080 (PID 12345)
+                                                                                 auth-common     running   —
+Fix gateway timeout on retries                task-fix-timeout-20261010-b2c3d4   api-gateway     done      stopped (PID stale)
 ```
+
+If a task has running processes, note it clearly so the user knows to stop them before archiving.
 
 ## Output format — archived tasks (--archived)
 

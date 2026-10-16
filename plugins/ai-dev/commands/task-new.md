@@ -23,13 +23,14 @@ Each task gets its own directory. All repos for that task are checked out as sub
 ├── task-login-pwd-20261010-a1b2c3/
 │   ├── TASK.md                          # task description
 │   ├── archive.json                     # task metadata (for archive/restore)
+│   ├── processes.json                   # background PIDs started during task
 │   ├── SUMMARY-user-service.md
 │   ├── SUMMARY-auth-common.md
 │   ├── user-service/                    # git worktree
 │   └── auth-common/                     # git worktree
 ```
 
-TASK.md, archive.json, and SUMMARY-<repo>.md live outside any worktree.
+TASK.md, archive.json, processes.json, and SUMMARY-<repo>.md live outside any worktree.
 
 ## Instructions
 
@@ -146,7 +147,15 @@ BRANCH_NAME  = feat/login-pwd-20261010-a1b2c3
    }
    ```
 
-4. For each repo:
+4. Initialize `processes.json` in the task directory as an empty object:
+
+   ```json
+   {}
+   ```
+
+   This file tracks all background processes started during this task. Sub-agents will update it when they start services.
+
+5. For each repo:
    - `cd` to its base repo path
    - `git checkout default_branch && git pull origin default_branch`
    - `git checkout -b ${BRANCH_NAME}` (if already exists, append another short suffix or ask user)
@@ -181,7 +190,28 @@ REQUIRED WORKFLOW:
 3. Self-review your own diff: run `git diff` and read every change critically — check for bugs, edge cases, missing error handling, style inconsistencies, leftover debug code, and anything you would flag in a PR review.
 4. Fix every issue you find. Re-run tests.
 5. Repeat steps 3–4 until a self-review pass finds zero new issues.
-6. Only then write ../SUMMARY-<repo-name>.md in the parent task directory (NOT inside this worktree) with: files changed, test results, cross-repo deps, and a note confirming the self-review loop ran clean."
+
+6. START SERVICES AND RECORD PIDs:
+   After tests pass, check if this repo's service needs to be running for the task to be verifiable (e.g. a web server, API, dev server, database). If yes:
+   a. Start it in the background, redirecting logs to a file in the task directory:
+      ```bash
+      # Example: start dev server, log to task dir
+      nohup <start-command> > ../<repo-name>.log 2>&1 &
+      SERVICE_PID=$!
+      echo "Started <repo-name> with PID $SERVICE_PID, logging to ../<repo-name>.log"
+      ```
+   b. Record it in `../processes.json` (relative to task root). Use jq to append safely:
+      ```bash
+      jq --arg name "<repo-name>" --argjson pid $SERVICE_PID --arg cmd "<start-command>" --arg port "<port-if-known>" --arg ts "$(date -Iseconds)" \
+         '.[$name] = (.[$name] // []) + [{pid: $pid, command: $cmd, port: $port, started_at: $ts, log_file: "../<repo-name>.log"}]' \
+         ../processes.json > /tmp/proc.json && mv /tmp/proc.json ../processes.json
+      ```
+   c. Verify the service actually started (curl the health endpoint or check the log) before proceeding.
+   d. If the service fails to start, fix the issue and retry; do NOT record a dead PID.
+
+   If no service needs to run for this task, skip this step entirely.
+
+7. Only then write ../SUMMARY-<repo-name>.md in the parent task directory (NOT inside this worktree) with: files changed, test results, cross-repo deps, services started (with PIDs), and a note confirming the self-review loop ran clean."
 ```
 
 ### Step 7: Report
@@ -199,4 +229,5 @@ Print task name, task directory path, branch name, list of worktrees, list of sp
 - Sub-agents communicate via files only (TASK.md in, SUMMARY-<repo>.md out).
 - After spawning, wait for sub-agents to report via SUMMARY files.
 - **Every sub-agent MUST self-review its own diff iteratively** (`git diff` → fix issues → re-test → repeat) until a clean pass, before writing SUMMARY.md.
+- **Any background service started during the task MUST be recorded in `processes.json`** in the task directory. Never start a service without recording its PID — otherwise it will leak and cause port conflicts.
 - If `glab` is not installed or not authenticated (`glab auth status` fails), tell the user to install and login first.

@@ -1,13 +1,13 @@
 {
   "name": "ai-dev",
   "displayName": "AI Dev - Task First",
-  "version": "2.0.2",
-  "description": "Task-first development: one task = one worktree + one branch + one isolated sub-agent. Archive and restore supported.",
+  "version": "2.1.0",
+  "description": "Task-first development: one task = one worktree + one branch + one isolated sub-agent. Process tracking, archive/restore.",
   "author": {
     "name": "phpor",
     "url": "https://github.com/phpor"
   },
   "repository": "https://github.com/phpor/ai-dev",
   "license": "MIT",
-  "keywords": ["worktree", "task", "subagent", "git", "parallel", "archive"]
+  "keywords": ["worktree", "task", "subagent", "git", "parallel", "archive", "process"]
 }
