@@ -2,18 +2,17 @@
 
 Task-first development plugin for **Claude Code**.
 
-One task = one directory + one branch + one or more worktrees + isolated sub-agents. Tasks can be archived and restored.
+One task = one worktree + one branch + one isolated sub-agent. Stop polluting your main repo with parallel changes.
 
 ## What it does
 
 Instead of running agents directly in your checked-out repo, each task gets:
 
-1. A task directory under `~/task_workspaces/`
-2. Its own auto-named semantic branch (`feat/login-pwd-20261010-a1b2c3`)
-3. One git worktree per involved repo, as a subdirectory of the task directory
-4. A `/subtask` sub-agent running inside each worktree
+1. An isolated `git worktree` under `~/task_workspaces/`
+2. Its own auto-named branch (`task/YYYYMMDD-xxxxxx`)
+3. A `/subtask` sub-agent running inside that worktree
 
-Your base repos under `~/repos/` stay clean. Completed tasks can be archived to `~/task_archive/` and restored later.
+Your base repos under `~/repos/` stay clean.
 
 ## Install
 
@@ -89,7 +88,7 @@ claude plugin marketplace remove ai-dev
 # 1. Create config directory
 mkdir -p ~/.ai-dev
 
-# 2. Copy the repo registry template
+# 2. Copy the repo registry template (path depends on install location)
 cp ~/.claude/plugins/marketplaces/phpor-ai-dev/plugins/ai-dev/shared/repo-registry.json.example ~/.ai-dev/repo-registry.json
 
 # 3. Edit ~/.ai-dev/repo-registry.json with your actual repos
@@ -130,7 +129,8 @@ git clone git@github.com:your-org/auth-common.git
 | `/task-new <desc>` | Create task directory + worktrees + branch + confirm understanding + spawn sub-agents |
 | `/task-list` | List active tasks and status; add `--archived` to show archived tasks |
 | `/task-resume <task>` | Resume an active task (recover context, cd into worktree) |
-| `/task-archive <task>` | Archive a completed task: record commits, clean worktrees, move to `~/task_archive/` |
+| `/task-stop <task>` | Stop all background processes for a task without archiving (free ports, restart services) |
+| `/task-archive <task>` | Archive a completed task: stop processes, record commits, clean worktrees, move to `~/task_archive/` |
 | `/task-restore <task>` | Restore an archived task: recreate worktrees from recorded commits |
 
 ## Usage
@@ -142,45 +142,28 @@ git clone git@github.com:your-org/auth-common.git
 Claude will:
 1. Match repos from your registry (or discover unknown ones via `glab`)
 2. Generate a meaningful task name and semantic branch name (e.g. `feat/login-pwd-20261010-a1b2c3`)
-3. Create `~/task_workspaces/task-login-pwd-20261010-a1b2c3/` with `TASK.md` and `archive.json`
+3. Create `~/task_workspaces/task-login-pwd-20261010-a1b2c3/` with `TASK.md`, `archive.json`, and empty `processes.json`
 4. Create one worktree per repo as a subdirectory
 5. Explore code and confirm its understanding with you before starting
 6. Spawn `/subtask --cwd <worktree>` for each repo
-7. Each sub-agent self-reviews its diff iteratively before writing SUMMARY
-
-## Directory layout
-
-```
-~/task_workspaces/
-├── task-login-pwd-20261010-a1b2c3/
-│   ├── TASK.md
-│   ├── archive.json
-│   ├── SUMMARY-user-service.md
-│   ├── SUMMARY-auth-common.md
-│   ├── user-service/          # git worktree
-│   └── auth-common/            # git worktree
-
-~/task_archive/
-└── task-login-pwd-20261010-a1b2c3/
-    ├── TASK.md
-    ├── archive.json           # includes commit SHAs, branch info
-    └── SUMMARY-*.md
-```
+7. Each sub-agent self-reviews its diff iteratively, then starts any needed services and records PIDs in `processes.json`
+8. On archive (`/task-archive`), all recorded processes are killed before worktrees are cleaned up
 
 ## Repo structure
 
 ```
 ai-dev/
 ├── .claude-plugin/
-│   └── marketplace.json
+│   └── marketplace.json          # Marketplace index
 ├── plugins/
-│   └── ai-dev/
+│   └── ai-dev/                    # The actual plugin
 │       ├── .claude-plugin/
-│       │   └── plugin.json
-│       ├── commands/
+│       │   └── plugin.json         # Plugin manifest
+│       ├── commands/               # Slash commands
 │       │   ├── task-new.md
 │       │   ├── task-list.md
 │       │   ├── task-resume.md
+│       │   ├── task-stop.md
 │       │   ├── task-archive.md
 │       │   └── task-restore.md
 │       ├── scripts/
