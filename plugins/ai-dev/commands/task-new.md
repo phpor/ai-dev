@@ -153,7 +153,7 @@ BRANCH_NAME  = feat/login-pwd-20261010-a1b2c3
    {}
    ```
 
-   This file tracks all background processes started during this task. Sub-agents will update it when they start services.
+   This file tracks all background processes started during this task. It will be updated by sub-agents when they start services.
 
 5. For each repo:
    - `cd` to its base repo path
@@ -161,21 +161,40 @@ BRANCH_NAME  = feat/login-pwd-20261010-a1b2c3
    - `git checkout -b ${BRANCH_NAME}` (if already exists, append another short suffix or ask user)
    - `git worktree add ~/task_workspaces/task-<...>/<repo.name> ${BRANCH_NAME}`
 
-### Step 5: Analyze code and confirm task understanding
+### Step 5: Analyze code, propose solutions, and confirm task understanding
 
-**Before spawning any sub-agents, explore the codebases and confirm your understanding with the user.**
+**Before spawning any sub-agents, explore the codebases, propose solution approaches, and confirm with the user.**
 
 1. For each worktree, quickly explore the codebase:
    - Read top-level files (README, package.json, go.mod, etc.) to understand the project
    - Find the relevant modules/files mentioned in the task
    - Note architecture, conventions, and any cross-repo dependencies
-2. Formulate your understanding of the task:
+
+2. **Propose solution approaches** — think about how to solve this task:
+   - If there are genuinely multiple reasonable ways to approach the problem (different libraries, different architectural patterns, different migration strategies, etc.), present **2–3 options** with a brief tradeoff for each:
+     ```
+     Based on the codebase, here are a few approaches:
+     - Option A: <brief description>. Pros: <...>. Cons: <...>.
+     - Option B: <brief description>. Pros: <...>. Cons: <...>.
+     - Option C: <brief description>. Pros: <...>. Cons: <...>.
+     Which approach do you prefer?
+     ```
+   - **Skip the multiple-options step** if:
+     - The solution path is already obvious or dictated by the user's request (e.g. "fix this bug", "add this field to this API")
+     - The task is very large and the approach is more about decomposition than choosing a direction
+     - There's really only one sensible way given the codebase conventions
+   - In those cases, just state your planned approach in one sentence.
+
+3. Formulate your understanding of the task:
    - What exactly needs to change in each repo
    - Which files/modules are involved
    - How the repos depend on each other
+   - The chosen approach (if options were presented)
    - Potential risks or questions
-3. Present this understanding to the user in a clear summary and **ask**: "Does this match what you want? Any corrections before I start sub-agents?"
-4. Only proceed to Step 6 after the user confirms. If the user corrects you, update TASK.md accordingly.
+
+4. Present this understanding to the user in a clear summary and **ask**: "Does this match what you want? Any corrections before I start sub-agents?"
+
+5. Only proceed to Step 6 after the user confirms. If the user corrects you or picks a different option, update TASK.md accordingly.
 
 ### Step 6: Spawn sub-agents
 
@@ -225,6 +244,7 @@ Print task name, task directory path, branch name, list of worktrees, list of sp
 - **When a new repo is discovered via glab, automatically propose adding it to the registry** — don't wait for the user to ask. Confirm the entry before writing.
 - **ALWAYS confirm the task name and branch name with the user before creating it.**
 - **ALWAYS confirm task understanding with the user AFTER exploring code but BEFORE spawning sub-agents.** Do not skip this step.
+- **Propose 2–3 solution approaches when there are genuinely multiple ways**, with pros/cons. Skip this if the solution is obvious, the task is huge, or only one sensible approach exists given the codebase.
 - **NEVER modify files in base repos under `~/repos/`.**
 - Sub-agents communicate via files only (TASK.md in, SUMMARY-<repo>.md out).
 - After spawning, wait for sub-agents to report via SUMMARY files.
