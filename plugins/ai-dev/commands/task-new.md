@@ -23,6 +23,7 @@ Each task gets its own directory. All repos for that task are checked out as sub
 ├── task-login-pwd-20261010-a1b2c3/
 │   ├── TASK.md                          # task description
 │   ├── archive.json                     # task metadata (for archive/restore)
+│   ├── PROGRESS.md                      # checklist of steps with checkboxes
 │   ├── processes.json                   # background PIDs started during task
 │   ├── SUMMARY-user-service.md
 │   ├── SUMMARY-auth-common.md
@@ -30,7 +31,7 @@ Each task gets its own directory. All repos for that task are checked out as sub
 │   └── auth-common/                     # git worktree
 ```
 
-TASK.md, archive.json, processes.json, and SUMMARY-<repo>.md live outside any worktree.
+TASK.md, PROGRESS.md, archive.json, processes.json, and SUMMARY-<repo>.md live outside any worktree.
 
 ## Instructions
 
@@ -194,7 +195,29 @@ BRANCH_NAME  = feat/login-pwd-20261010-a1b2c3
 
 4. Present this understanding to the user in a clear summary and **ask**: "Does this match what you want? Any corrections before I start sub-agents?"
 
-5. Only proceed to Step 6 after the user confirms. If the user corrects you or picks a different option, update TASK.md accordingly.
+5. Only proceed after the user confirms. If the user corrects you or picks a different option, update TASK.md accordingly.
+
+6. **Create `PROGRESS.md`** in the task directory with a checklist of concrete steps. Break the task into 3–8 actionable items. Example:
+
+   ```markdown
+   # Progress: Add password strength validation to login
+
+   ## user-service
+   - [ ] Add password complexity validation in `auth/login.go`
+   - [ ] Write unit tests for edge cases (too short, no digit, no special char)
+   - [ ] Update API error codes
+   - [ ] Start dev server on :8080 and verify
+
+   ## auth-common
+   - [ ] Extract password policy constants into `auth/policy.go`
+   - [ ] Export `ValidatePassword()` function
+   - [ ] Add doc comments
+
+   ## Integration
+   - [ ] End-to-end test: submit weak password → expect 400
+   ```
+
+   This file lives in the task root (not in any worktree). Sub-agents update checkboxes as they complete items. If the user switches sessions or comes back later, `/task-resume` reads this file to show what's done.
 
 ### Step 6: Spawn sub-agents
 
@@ -205,12 +228,13 @@ For each repo worktree, use `/subtask`:
 
 REQUIRED WORKFLOW:
 1. Make the code changes.
-2. Run the project's test suite. Fix any failures.
-3. Self-review your own diff: run `git diff` and read every change critically — check for bugs, edge cases, missing error handling, style inconsistencies, leftover debug code, and anything you would flag in a PR review.
-4. Fix every issue you find. Re-run tests.
-5. Repeat steps 3–4 until a self-review pass finds zero new issues.
+2. **Update `../PROGRESS.md`**: read it, find the items relevant to `<repo-name>`, and check off each item as you complete it (change `- [ ]` to `- [x]`). Add brief notes in parentheses if helpful. Do NOT touch other repos' items.
+3. Run the project's test suite. Fix any failures.
+4. Self-review your own diff: run `git diff` and read every change critically — check for bugs, edge cases, missing error handling, style inconsistencies, leftover debug code, and anything you would flag in a PR review.
+5. Fix every issue you find. Re-run tests.
+6. Repeat steps 4–5 until a self-review pass finds zero new issues.
 
-6. START SERVICES AND RECORD PIDs:
+7. START SERVICES AND RECORD PIDs:
    After tests pass, check if this repo's service needs to be running for the task to be verifiable (e.g. a web server, API, dev server, database). If yes:
    a. Start it in the background, redirecting logs to a file in the task directory:
       ```bash
@@ -230,7 +254,7 @@ REQUIRED WORKFLOW:
 
    If no service needs to run for this task, skip this step entirely.
 
-7. Only then write ../SUMMARY-<repo-name>.md in the parent task directory (NOT inside this worktree) with: files changed, test results, cross-repo deps, services started (with PIDs), and a note confirming the self-review loop ran clean."
+8. Only then write ../SUMMARY-<repo-name>.md in the parent task directory (NOT inside this worktree) with: files changed, test results, cross-repo deps, services started (with PIDs), and a note confirming the self-review loop ran clean."
 ```
 
 ### Step 7: Report
@@ -246,7 +270,7 @@ Print task name, task directory path, branch name, list of worktrees, list of sp
 - **ALWAYS confirm task understanding with the user AFTER exploring code but BEFORE spawning sub-agents.** Do not skip this step.
 - **Propose 2–3 solution approaches when there are genuinely multiple ways**, with pros/cons. Skip this if the solution is obvious, the task is huge, or only one sensible approach exists given the codebase.
 - **NEVER modify files in base repos under `~/repos/`.**
-- Sub-agents communicate via files only (TASK.md in, SUMMARY-<repo>.md out).
+- Sub-agents communicate via files only (TASK.md in, PROGRESS.md updates, SUMMARY-<repo>.md out).
 - After spawning, wait for sub-agents to report via SUMMARY files.
 - **Every sub-agent MUST self-review its own diff iteratively** (`git diff` → fix issues → re-test → repeat) until a clean pass, before writing SUMMARY.md.
 - **Any background service started during the task MUST be recorded in `processes.json`** in the task directory. Never start a service without recording its PID — otherwise it will leak and cause port conflicts.
