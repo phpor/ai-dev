@@ -23,7 +23,9 @@ Each task gets its own directory. All repos for that task are checked out as sub
 ├── task-login-pwd-20261010-a1b2c3/
 │   ├── TASK.md                          # task description
 │   ├── archive.json                     # task metadata (for archive/restore)
-│   ├── PROGRESS.md                      # checklist of steps with checkboxes
+│   ├── PROGRESS-user-service.md         # per-repo checklist (sub-agent writes this)
+│   ├── PROGRESS-auth-common.md
+│   ├── PROGRESS-integration.md          # cross-repo steps (main agent owns)
 │   ├── processes.json                   # background PIDs started during task
 │   ├── SUMMARY-user-service.md
 │   ├── SUMMARY-auth-common.md
@@ -31,7 +33,7 @@ Each task gets its own directory. All repos for that task are checked out as sub
 │   └── auth-common/                     # git worktree
 ```
 
-TASK.md, PROGRESS.md, archive.json, processes.json, and SUMMARY-<repo>.md live outside any worktree.
+TASK.md, PROGRESS-*.md, archive.json, processes.json, and SUMMARY-<repo>.md live outside any worktree.
 
 ## Instructions
 
@@ -197,27 +199,28 @@ BRANCH_NAME  = feat/login-pwd-20261010-a1b2c3
 
 5. Only proceed after the user confirms. If the user corrects you or picks a different option, update TASK.md accordingly.
 
-6. **Create `PROGRESS.md`** in the task directory with a checklist of concrete steps. Break the task into 3–8 actionable items. Example:
+6. **Create per-repo progress files** — one `PROGRESS-<repo>.md` per repo in the task directory. This avoids race conditions when multiple sub-agents run simultaneously. Example:
 
+   `PROGRESS-user-service.md`:
    ```markdown
-   # Progress: Add password strength validation to login
-
-   ## user-service
+   # Progress: user-service
    - [ ] Add password complexity validation in `auth/login.go`
    - [ ] Write unit tests for edge cases (too short, no digit, no special char)
    - [ ] Update API error codes
    - [ ] Start dev server on :8080 and verify
+   ```
 
-   ## auth-common
+   `PROGRESS-auth-common.md`:
+   ```markdown
+   # Progress: auth-common
    - [ ] Extract password policy constants into `auth/policy.go`
    - [ ] Export `ValidatePassword()` function
    - [ ] Add doc comments
-
-   ## Integration
-   - [ ] End-to-end test: submit weak password → expect 400
    ```
 
-   This file lives in the task root (not in any worktree). Sub-agents update checkboxes as they complete items. If the user switches sessions or comes back later, `/task-resume` reads this file to show what's done.
+   If there are cross-repo integration steps, put them in a top-level `PROGRESS-integration.md` (main agent owns this file, sub-agents do NOT write to it).
+
+   Each sub-agent only writes to its own `PROGRESS-<repo>.md`. `/task-list` and `/task-resume` glob all `PROGRESS-*.md` files and aggregate progress. This way concurrent sub-agents never conflict.
 
 ### Step 6: Spawn sub-agents
 
@@ -228,7 +231,7 @@ For each repo worktree, use `/subtask`:
 
 REQUIRED WORKFLOW:
 1. Make the code changes.
-2. **Update `../PROGRESS.md`**: read it, find the items relevant to `<repo-name>`, and check off each item as you complete it (change `- [ ]` to `- [x]`). Add brief notes in parentheses if helpful. Do NOT touch other repos' items.
+2. **Update `../PROGRESS-<repo-name>.md`**: read it, check off each item as you complete it (change `- [ ]` to `- [x]`). Add brief notes in parentheses if helpful. Only modify THIS file — do not touch other repos' progress files or PROGRESS-integration.md.
 3. Run the project's test suite. Fix any failures.
 4. Self-review your own diff: run `git diff` and read every change critically — check for bugs, edge cases, missing error handling, style inconsistencies, leftover debug code, and anything you would flag in a PR review.
 5. Fix every issue you find. Re-run tests.
@@ -270,7 +273,7 @@ Print task name, task directory path, branch name, list of worktrees, list of sp
 - **ALWAYS confirm task understanding with the user AFTER exploring code but BEFORE spawning sub-agents.** Do not skip this step.
 - **Propose 2–3 solution approaches when there are genuinely multiple ways**, with pros/cons. Skip this if the solution is obvious, the task is huge, or only one sensible approach exists given the codebase.
 - **NEVER modify files in base repos under `~/repos/`.**
-- Sub-agents communicate via files only (TASK.md in, PROGRESS.md updates, SUMMARY-<repo>.md out).
+- Sub-agents communicate via files only (TASK.md in, per-repo PROGRESS updates, SUMMARY-<repo>.md out).
 - After spawning, wait for sub-agents to report via SUMMARY files.
 - **Every sub-agent MUST self-review its own diff iteratively** (`git diff` → fix issues → re-test → repeat) until a clean pass, before writing SUMMARY.md.
 - **Any background service started during the task MUST be recorded in `processes.json`** in the task directory. Never start a service without recording its PID — otherwise it will leak and cause port conflicts.

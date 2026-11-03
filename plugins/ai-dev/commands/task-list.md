@@ -20,7 +20,7 @@ Show all active tasks under `~/task_workspaces/`. Use `/task-list --archived` to
      - Check if `SUMMARY-<repo-name>.md` exists (sub-agent done vs running).
      - Overall status: `running` if any repo lacks its SUMMARY, `done` otherwise.
      - **Check process status**: read `processes.json` if it exists. For each recorded PID, check if it's alive with `kill -0 <pid>`. Show running processes with their port.
-     - **Check progress**: read `PROGRESS.md` if it exists. Count `- [x]` vs `- [ ]` items. Show as `3/7` in a PROGRESS column.
+     - **Check progress**: glob `PROGRESS-*.md` files. Count `- [x]` vs `- [ ]` across all of them. Show as `5/12` in a PROGRESS column.
      - Get last modified time.
 
 2. If `--archived` flag is passed:
@@ -40,7 +40,9 @@ Add password strength validation             task-login-pwd-20261010-a1b2c3     
 Fix gateway timeout on retries                task-fix-timeout-20261010-b2c3d4   3/3        api-gateway     done      stopped (PID stale)
 ```
 
-If PROGRESS.md doesn't exist, show `—` in the PROGRESS column.
+If no `PROGRESS-*.md` files exist, show `—` in the PROGRESS column.
+
+If a task has running processes, note it clearly so the user knows to stop them before archiving.
 
 ## Output format — archived tasks (--archived)
 
