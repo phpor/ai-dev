@@ -22,20 +22,25 @@ Resume an existing task (all its worktrees across repos) and pick up where you l
    - Otherwise, look for `~/task_workspaces/task-<input>`
 2. If not found: tell user "Task not found. Use /task-list to see active tasks." and abort.
 3. Read `TASK.md` in the task directory to recover the original task description and branch name.
-4. For each subdirectory (repo worktree):
+4. **Read `PROGRESS.md`** in the task directory (if it exists). Show the checklist and compute progress:
+   - Count `- [x]` vs `- [ ]` items
+   - Display: "Progress: 3/7 items done (43%)"
+   - List remaining unchecked items as "What's left"
+5. For each subdirectory (repo worktree):
    - Read `SUMMARY-<repo-name>.md` at the task root if it exists (what the sub-agent already completed)
    - Check git status for current uncommitted changes
-5. Use the `/cd` built-in to switch the main session to the primary worktree (first repo found, or ask user which one).
-6. Present a summary:
+6. Use the `/cd` built-in to switch the main session to the primary worktree (first repo found, or ask user which one).
+7. Present a summary:
    - Original task description (from TASK.md)
+   - **Progress checklist (from PROGRESS.md)** — done items struck through, pending items highlighted
    - List of repos/worktrees involved
    - What was already done (from each SUMMARY-<repo>.md)
    - Current git status per worktree
-   - Suggested next steps
-7. Ask user whether to continue in the main session or spawn a fresh `/subtask`.
+   - Suggested next steps (first unchecked item)
+8. Ask user whether to continue in the main session or spawn a fresh `/subtask`.
 
 ## Rules
 
 - Do NOT create new branches or worktrees. This resumes an existing task.
-- Always recover context from `TASK.md` and `SUMMARY-<repo>.md` (both at task root) before making changes.
+- Always recover context from `TASK.md`, `PROGRESS.md`, and `SUMMARY-<repo>.md` (all at task root) before making changes.
 - A task may span multiple repos — report status for all of them.
